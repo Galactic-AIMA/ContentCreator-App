@@ -54,14 +54,16 @@ export interface VideoRecord {
   phraseId?: string
   createdAt: string
   config: VideoConfig
+  filesDeleted?: boolean
 }
 
 export interface Phrase {
   id: string
   text: string
-  category?: string
+  category?: 'Sincronía Natural' | 'Sabiduría del Cuerpo' | 'Ritmo Vital'
   author?: string
   usageCount?: number
+  status?: 'active' | 'pending'
 }
 
 export interface ImageItem {

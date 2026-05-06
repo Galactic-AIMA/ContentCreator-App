@@ -106,6 +106,7 @@ export interface Phrase {
   category?: string
   author?: string
   usageCount?: number
+  status?: 'active' | 'pending'
 }
 
 export interface ImageItem {
