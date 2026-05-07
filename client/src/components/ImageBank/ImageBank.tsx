@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Shuffle, Upload, Search, FolderInput, Download, CheckCircle2, Loader2, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Shuffle, Upload, Search, Download, CheckCircle2, Loader2, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { imagesApi, UnsplashPhoto } from '../../api'
 import { ImageItem } from '../../types'
 import { useVideoStore } from '../../store/videoStore'
 
-type Tab = 'banco' | 'unsplash' | 'carpeta'
+type Tab = 'banco' | 'unsplash' | 'pinterest'
 
 export default function ImageBank() {
   const [tab, setTab] = useState<Tab>('banco')
@@ -23,11 +23,7 @@ export default function ImageBank() {
   const [downloading, setDownloading] = useState<Set<string>>(new Set())
   const [downloaded, setDownloaded] = useState<Set<string>>(new Set())
 
-  // ── Carpeta (bulk import) state ─────────────────────────
-  const [folderPath, setFolderPath] = useState('')
-  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; total: number } | null>(null)
-  const [importLoading, setImportLoading] = useState(false)
-  const [importError, setImportError] = useState('')
+  // ── Carpeta local eliminada ─────────────────────────
 
   // ── gallery-dl (Pinterest) state ─────────────────────────
   const [galleryDlUrl, setGalleryDlUrl] = useState('')
@@ -112,22 +108,7 @@ export default function ImageBank() {
     }
   }
 
-  // ── Bulk import handler ─────────────────────────────────
-  const handleBulkImport = async () => {
-    if (!folderPath.trim()) return
-    setImportLoading(true)
-    setImportError('')
-    setImportResult(null)
-    try {
-      const result = await imagesApi.bulkImport(folderPath.trim())
-      setImportResult(result)
-      if (result.imported > 0) await load()
-    } catch (err: any) {
-      setImportError(err.response?.data?.error ?? err.message)
-    } finally {
-      setImportLoading(false)
-    }
-  }
+  // ── Bulk import handler eliminado ─────────────────────────────────
 
   const hasUsed = images.some((img) => (img.usageCount ?? 0) > 0)
   const visible = hideUsed ? images.filter((img) => (img.usageCount ?? 0) === 0) : images
@@ -135,7 +116,7 @@ export default function ImageBank() {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'banco', label: 'Banco' },
     { id: 'unsplash', label: 'Unsplash' },
-    { id: 'carpeta', label: 'Carpeta' },
+    { id: 'pinterest', label: 'Pinterest' },
   ]
 
   return (
@@ -303,23 +284,49 @@ export default function ImageBank() {
           )}
 
           {!unsplashResults.length && !unsplashLoading && !unsplashError && (
-            <p className="text-xs text-gray-500 text-center py-6">
-              Busca: "forest", "body", "nature", "minimal", "water"...
-              <br />
-              Vertical · licencia comercial libre.
-            </p>
+            <div className="flex flex-col gap-3 mt-2">
+              <span className="text-xs font-semibold text-white">Tus descargas de Unsplash</span>
+              {images.filter(img => img.id.startsWith('unsplash/')).length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {images.filter(img => img.id.startsWith('unsplash/')).map((img) => (
+                    <button
+                      key={img.id}
+                      onClick={() => selectImage(img)}
+                      className={`relative aspect-[9/16] overflow-hidden rounded-lg border-2 transition-all ${
+                        config.imageId === img.id
+                          ? 'border-brand-500'
+                          : 'border-transparent hover:border-gray-600'
+                      }`}
+                    >
+                      <img src={img.url} alt={img.filename} className="w-full h-full object-cover" />
+                      {(img.usageCount ?? 0) > 0 && (
+                        <span className="absolute top-1 right-1 text-xs bg-black/70 text-brand-400 rounded px-1 py-0.5 font-medium leading-none">
+                          ×{img.usageCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 text-center py-6">
+                  Busca: "forest", "body", "nature", "minimal", "water"...
+                  <br />
+                  Vertical · licencia comercial libre.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
 
-      {/* ── Tab: Carpeta ──────────────────────────────────── */}
-      {tab === 'carpeta' && (
+      {/* ── Tab: Pinterest ──────────────────────────────────── */}
+      {tab === 'pinterest' && (
         <div className="flex flex-col gap-5 p-3">
 
-          {/* ── Sección 1: Pinterest via gallery-dl ── */}
+          {/* ── Pinterest via gallery-dl ── */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-white">Tablero de Pinterest</span>
+              <span className="text-xs font-semibold text-white">Añade tablero de Pinterest</span>
               <a
                 href="https://github.com/mikf/gallery-dl"
                 target="_blank"
@@ -371,51 +378,6 @@ export default function ImageBank() {
               Requiere <span className="font-mono">gallery-dl</span> instalado:{' '}
               <span className="font-mono">pip install gallery-dl</span>
             </p>
-          </div>
-
-          <div className="border-t border-gray-800" />
-
-          {/* ── Sección 2: Carpeta local ya descargada ── */}
-          <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold text-white">Carpeta local</span>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={folderPath}
-                onChange={(e) => setFolderPath(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleBulkImport()}
-                placeholder="D:\Pinterest\mi-tablero"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 font-mono"
-              />
-              <button
-                onClick={handleBulkImport}
-                disabled={importLoading || !folderPath.trim()}
-                className="flex items-center gap-1.5 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 rounded-lg px-3 py-2 text-gray-300 transition-colors whitespace-nowrap"
-              >
-                {importLoading ? <Loader2 size={13} className="animate-spin" /> : <FolderInput size={13} />}
-                {importLoading ? 'Importando...' : 'Importar'}
-              </button>
-            </div>
-
-            {importError && (
-              <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
-                {importError}
-              </p>
-            )}
-
-            {importResult && (
-              <div className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2 flex flex-col gap-0.5">
-                <p className="text-xs text-green-400 font-medium">
-                  ✓ {importResult.imported} imagen{importResult.imported !== 1 ? 'es' : ''} importada{importResult.imported !== 1 ? 's' : ''}
-                </p>
-                {importResult.skipped > 0 && (
-                  <p className="text-xs text-gray-500">
-                    {importResult.skipped} omitida{importResult.skipped !== 1 ? 's' : ''} (ya existían)
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}

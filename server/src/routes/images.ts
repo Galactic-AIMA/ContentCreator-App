@@ -159,11 +159,13 @@ router.post('/unsplash/download', async (req, res) => {
       headers: { Authorization: `Client-ID ${key}` },
     })
 
-    const destDir = config.paths.images
+    // Guardar en la subcarpeta 'unsplash' dentro del banco de imágenes
+    const destDir = path.join(config.paths.images, 'unsplash')
     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
 
     const filename = `unsplash_${photoId}.jpg`
     const destPath = path.join(destDir, filename)
+    const relativePath = `unsplash/${filename}`
 
     if (!fs.existsSync(destPath)) {
       const imgResp = await axios.get(url, { responseType: 'arraybuffer' })
@@ -171,10 +173,10 @@ router.post('/unsplash/download', async (req, res) => {
     }
 
     res.json({
-      id: filename,
-      filename,
+      id: relativePath,
+      filename: relativePath,
       path: destPath,
-      url: `/api/images/file/${encodeURIComponent(filename)}`,
+      url: `/api/images/file/${encodeURIComponent(relativePath)}`,
       photographer,
     } as ImageItem)
   } catch (err: any) {
