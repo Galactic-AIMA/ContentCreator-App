@@ -3,6 +3,23 @@ import { Phrase, ImageItem, VideoRecord, VideoConfig, VideoMeta, SegmentLayout }
 
 const api = axios.create({ baseURL: '/api' })
 
+export interface UnsplashPhoto {
+  id: string
+  thumb: string
+  regular: string
+  description: string
+  photographer: string
+  photographerUrl: string
+  color: string
+}
+
+export interface BulkImportResult {
+  imported: number
+  skipped: number
+  total: number
+  files: string[]
+}
+
 export const imagesApi = {
   list: () => api.get<ImageItem[]>('/images').then((r) => r.data),
   random: () => api.get<ImageItem>('/images/random').then((r) => r.data),
@@ -11,6 +28,12 @@ export const imagesApi = {
     fd.append('image', file)
     return api.post<ImageItem>('/upload/image', fd).then((r) => r.data)
   },
+  bulkImport: (folderPath: string) =>
+    api.post<BulkImportResult>('/images/bulk-import', { folderPath }).then((r) => r.data),
+  unsplashSearch: (query: string, page = 1) =>
+    api.get<UnsplashPhoto[]>('/images/unsplash/search', { params: { query, page } }).then((r) => r.data),
+  unsplashDownload: (photoId: string, url: string, photographer: string) =>
+    api.post<ImageItem>('/images/unsplash/download', { photoId, url, photographer }).then((r) => r.data),
 }
 
 export interface SuggestResult {

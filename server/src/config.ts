@@ -23,6 +23,10 @@ export const config = {
     bucket: process.env.AWS_S3_BUCKET || '',
   },
 
+  unsplash: {
+    accessKey: process.env.UNSPLASH_ACCESS_KEY || '',
+  },
+
   webhooks: {
     test: process.env.WEBHOOK_TEST_URL || '',
     prod: process.env.WEBHOOK_PROD_URL || '',
