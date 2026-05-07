@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import path from 'path'
 
-dotenv.config({ path: path.join(__dirname, '../../.env') })
+dotenv.config({ path: path.join(__dirname, '../.env') })
 
 export const config = {
   port: parseInt(process.env.PORT || '3001'),
@@ -25,6 +25,11 @@ export const config = {
 
   unsplash: {
     accessKey: process.env.UNSPLASH_ACCESS_KEY || '',
+  },
+
+  galleryDl: {
+    // Ruta al ejecutable — vacío = busca en PATH global
+    bin: process.env.GALLERY_DL_PATH || 'gallery-dl',
   },
 
   webhooks: {

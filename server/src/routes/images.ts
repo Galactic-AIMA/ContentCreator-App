@@ -172,15 +172,16 @@ router.post('/gallery-dl', (req, res) => {
   const destDir = config.paths.images
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
 
-  // gallery-dl descarga directo a destDir con estructura plana (-d + --filename)
-  const cmd = `gallery-dl -d "${destDir}" --filename "{filename}.{extension}" "${url}"`
+  const bin = `"${config.galleryDl.bin}"`
+  // -D pone los archivos directamente en destDir sin crear subcarpetas
+  const cmd = `${bin} -D "${destDir}" --filename "{filename}.{extension}" "${url}"`
 
   exec(cmd, { timeout: 5 * 60 * 1000 }, (err, stdout, stderr) => {
     if (err && !stdout) {
       const msg = stderr?.trim() || err.message
-      if (msg.includes('command not found') || msg.includes('is not recognized')) {
+      if (msg.includes('command not found') || msg.includes('is not recognized') || msg.includes('no se reconoce')) {
         return res.status(503).json({
-          error: 'gallery-dl no está instalado. Ejecuta: pip install gallery-dl',
+          error: `gallery-dl no encontrado en: ${config.galleryDl.bin}. Verifica GALLERY_DL_PATH en .env`,
         })
       }
       return res.status(500).json({ error: msg })
