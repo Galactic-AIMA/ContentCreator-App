@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import fs from 'fs'
 import path from 'path'
+import { exec } from 'child_process'
 import axios from 'axios'
 import { config } from '../config'
 import { ImageItem } from '../types'
@@ -161,6 +162,36 @@ router.post('/unsplash/download', async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message })
   }
+})
+
+// POST /api/images/gallery-dl — descargar tablero de Pinterest con gallery-dl y luego importar al banco
+router.post('/gallery-dl', (req, res) => {
+  const { url } = req.body ?? {}
+  if (!url) return res.status(400).json({ error: 'url requerida' })
+
+  const destDir = config.paths.images
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
+
+  // gallery-dl descarga directo a destDir con estructura plana (-d + --filename)
+  const cmd = `gallery-dl -d "${destDir}" --filename "{filename}.{extension}" "${url}"`
+
+  exec(cmd, { timeout: 5 * 60 * 1000 }, (err, stdout, stderr) => {
+    if (err && !stdout) {
+      const msg = stderr?.trim() || err.message
+      if (msg.includes('command not found') || msg.includes('is not recognized')) {
+        return res.status(503).json({
+          error: 'gallery-dl no está instalado. Ejecuta: pip install gallery-dl',
+        })
+      }
+      return res.status(500).json({ error: msg })
+    }
+
+    // Contar archivos descargados (líneas con "# " en stdout de gallery-dl)
+    const lines = (stdout || '').split('\n').filter((l) => l.includes('# '))
+    const downloaded = lines.length
+
+    res.json({ downloaded, message: `${downloaded} imagen${downloaded !== 1 ? 'es' : ''} descargada${downloaded !== 1 ? 's' : ''} al banco` })
+  })
 })
 
 // GET /api/images/file/:filename — servir imagen con content-type correcto

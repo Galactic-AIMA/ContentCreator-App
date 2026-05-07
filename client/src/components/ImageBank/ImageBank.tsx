@@ -29,6 +29,12 @@ export default function ImageBank() {
   const [importLoading, setImportLoading] = useState(false)
   const [importError, setImportError] = useState('')
 
+  // ── gallery-dl (Pinterest) state ─────────────────────────
+  const [galleryDlUrl, setGalleryDlUrl] = useState('')
+  const [galleryDlLoading, setGalleryDlLoading] = useState(false)
+  const [galleryDlResult, setGalleryDlResult] = useState<{ downloaded: number; message: string } | null>(null)
+  const [galleryDlError, setGalleryDlError] = useState('')
+
   const load = async () => {
     setLoading(true)
     try {
@@ -86,6 +92,23 @@ export default function ImageBank() {
       setUnsplashError(err.response?.data?.error ?? err.message)
     } finally {
       setDownloading((s) => { const n = new Set(s); n.delete(photo.id); return n })
+    }
+  }
+
+  // ── gallery-dl handler ──────────────────────────────────
+  const handleGalleryDl = async () => {
+    if (!galleryDlUrl.trim()) return
+    setGalleryDlLoading(true)
+    setGalleryDlError('')
+    setGalleryDlResult(null)
+    try {
+      const result = await imagesApi.galleryDl(galleryDlUrl.trim())
+      setGalleryDlResult(result)
+      await load()
+    } catch (err: any) {
+      setGalleryDlError(err.response?.data?.error ?? err.message)
+    } finally {
+      setGalleryDlLoading(false)
     }
   }
 
@@ -291,67 +314,109 @@ export default function ImageBank() {
 
       {/* ── Tab: Carpeta ──────────────────────────────────── */}
       {tab === 'carpeta' && (
-        <div className="flex flex-col gap-4 p-3">
-          <div className="text-xs text-gray-400 bg-gray-800/50 rounded-lg p-3 leading-relaxed">
-            Importa todas las imágenes de una carpeta local — ideal para tableros de Pinterest descargados con{' '}
-            <a
-              href="https://github.com/mikf/gallery-dl"
-              target="_blank"
-              rel="noreferrer"
-              className="text-brand-400 hover:underline inline-flex items-center gap-0.5"
-            >
-              gallery-dl <ExternalLink size={10} />
-            </a>
-            .
-            <span className="text-gray-500 mt-2 block font-mono text-[11px]">
-              pip install gallery-dl<br />
-              gallery-dl https://pinterest.com/usuario/tablero/
-            </span>
-          </div>
+        <div className="flex flex-col gap-5 p-3">
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-gray-400">Ruta de la carpeta</label>
-            <input
-              type="text"
-              value={folderPath}
-              onChange={(e) => setFolderPath(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleBulkImport()}
-              placeholder="D:\Pinterest\mi-tablero"
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 font-mono"
-            />
-          </div>
-
-          <button
-            onClick={handleBulkImport}
-            disabled={importLoading || !folderPath.trim()}
-            className="flex items-center justify-center gap-2 text-xs bg-brand-600 hover:bg-brand-500 disabled:opacity-40 rounded-lg px-4 py-2.5 text-white font-medium transition-colors"
-          >
-            {importLoading ? (
-              <><Loader2 size={13} className="animate-spin" /> Importando...</>
-            ) : (
-              <><FolderInput size={13} /> Importar todas</>
-            )}
-          </button>
-
-          {importError && (
-            <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
-              {importError}
-            </p>
-          )}
-
-          {importResult && (
-            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3 flex flex-col gap-1">
-              <p className="text-xs text-green-400 font-medium">
-                ✓ {importResult.imported} imagen{importResult.imported !== 1 ? 'es' : ''} importada{importResult.imported !== 1 ? 's' : ''}
-              </p>
-              {importResult.skipped > 0 && (
-                <p className="text-xs text-gray-500">
-                  {importResult.skipped} omitida{importResult.skipped !== 1 ? 's' : ''} (ya existían)
-                </p>
-              )}
-              <p className="text-xs text-gray-600">Total en carpeta: {importResult.total}</p>
+          {/* ── Sección 1: Pinterest via gallery-dl ── */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-white">Tablero de Pinterest</span>
+              <a
+                href="https://github.com/mikf/gallery-dl"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-brand-400 hover:underline flex items-center gap-0.5"
+              >
+                gallery-dl <ExternalLink size={9} />
+              </a>
             </div>
-          )}
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={galleryDlUrl}
+                onChange={(e) => setGalleryDlUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGalleryDl()}
+                placeholder="https://pinterest.com/usuario/tablero/"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500"
+              />
+              <button
+                onClick={handleGalleryDl}
+                disabled={galleryDlLoading || !galleryDlUrl.trim()}
+                className="flex items-center gap-1.5 text-xs bg-brand-600 hover:bg-brand-500 disabled:opacity-40 rounded-lg px-3 py-2 text-white transition-colors whitespace-nowrap"
+              >
+                {galleryDlLoading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                {galleryDlLoading ? 'Descargando...' : 'Descargar'}
+              </button>
+            </div>
+
+            {galleryDlLoading && (
+              <p className="text-xs text-gray-500 text-center animate-pulse">
+                Descargando tablero, puede tardar unos minutos...
+              </p>
+            )}
+
+            {galleryDlError && (
+              <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
+                {galleryDlError}
+              </p>
+            )}
+
+            {galleryDlResult && (
+              <div className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2">
+                <p className="text-xs text-green-400 font-medium">✓ {galleryDlResult.message}</p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-gray-600">
+              Requiere <span className="font-mono">gallery-dl</span> instalado:{' '}
+              <span className="font-mono">pip install gallery-dl</span>
+            </p>
+          </div>
+
+          <div className="border-t border-gray-800" />
+
+          {/* ── Sección 2: Carpeta local ya descargada ── */}
+          <div className="flex flex-col gap-3">
+            <span className="text-xs font-semibold text-white">Carpeta local</span>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={folderPath}
+                onChange={(e) => setFolderPath(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleBulkImport()}
+                placeholder="D:\Pinterest\mi-tablero"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 font-mono"
+              />
+              <button
+                onClick={handleBulkImport}
+                disabled={importLoading || !folderPath.trim()}
+                className="flex items-center gap-1.5 text-xs bg-gray-700 hover:bg-gray-600 disabled:opacity-40 rounded-lg px-3 py-2 text-gray-300 transition-colors whitespace-nowrap"
+              >
+                {importLoading ? <Loader2 size={13} className="animate-spin" /> : <FolderInput size={13} />}
+                {importLoading ? 'Importando...' : 'Importar'}
+              </button>
+            </div>
+
+            {importError && (
+              <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
+                {importError}
+              </p>
+            )}
+
+            {importResult && (
+              <div className="bg-gray-800/60 border border-gray-700 rounded-lg px-3 py-2 flex flex-col gap-0.5">
+                <p className="text-xs text-green-400 font-medium">
+                  ✓ {importResult.imported} imagen{importResult.imported !== 1 ? 'es' : ''} importada{importResult.imported !== 1 ? 's' : ''}
+                </p>
+                {importResult.skipped > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {importResult.skipped} omitida{importResult.skipped !== 1 ? 's' : ''} (ya existían)
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

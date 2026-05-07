@@ -30,6 +30,8 @@ export const imagesApi = {
   },
   bulkImport: (folderPath: string) =>
     api.post<BulkImportResult>('/images/bulk-import', { folderPath }).then((r) => r.data),
+  galleryDl: (url: string) =>
+    api.post<{ downloaded: number; message: string }>('/images/gallery-dl', { url }, { timeout: 6 * 60 * 1000 }).then((r) => r.data),
   unsplashSearch: (query: string, page = 1) =>
     api.get<UnsplashPhoto[]>('/images/unsplash/search', { params: { query, page } }).then((r) => r.data),
   unsplashDownload: (photoId: string, url: string, photographer: string) =>

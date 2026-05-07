@@ -57,6 +57,7 @@ export default function Editor() {
   const [batchRunning, setBatchRunning] = useState(false)
   const [batchOpen, setBatchOpen] = useState(false)
   const [batchPresetId, setBatchPresetId] = useState<string | null>(null)
+  const [metaOpen, setMetaOpen] = useState(false)
 
   const { builtIn: builtInPresets, userPresets, getConfigPatch, getTextPatch } = usePresets()
 
@@ -563,30 +564,6 @@ export default function Editor() {
           {tab === 'phrases' && <PhraseBank />}
         </div>
 
-        {/* Meta datos */}
-        <div className="border-t border-spirit-border p-4 flex flex-col gap-2 bg-spirit-dark/50">
-          <input
-            className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-spirit-accent transition-colors"
-            placeholder="Título del video"
-            value={meta.title}
-            onChange={(e) => setMeta({ title: e.target.value })}
-          />
-          <textarea
-            className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-sm text-white resize-none focus:outline-none focus:border-spirit-accent transition-colors"
-            rows={2}
-            placeholder="Descripción"
-            value={meta.description}
-            onChange={(e) => setMeta({ description: e.target.value })}
-          />
-          <input
-            className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-sm text-white focus:outline-none focus:border-spirit-accent transition-colors"
-            placeholder="Tags separados por coma"
-            value={meta.tags.join(', ')}
-            onChange={(e) =>
-              setMeta({ tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })
-            }
-          />
-        </div>
       </aside>
 
       {/* ── Centro: preview y acciones ── */}
@@ -680,6 +657,42 @@ export default function Editor() {
             >
               <FolderOpen size={16} />
             </button>
+          </div>
+
+          {/* ── Metadatos ── */}
+          <div className="border-t border-spirit-border/30 pt-3">
+            <button
+              onClick={() => setMetaOpen((v) => !v)}
+              className="flex items-center justify-between w-full text-xs text-spirit-muted hover:text-white transition-colors"
+            >
+              <span className="font-medium">Título · Descripción · Tags</span>
+              <ChevronDown size={11} className={`transition-transform duration-200 ${metaOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {metaOpen && (
+              <div className="flex flex-col gap-2 mt-3">
+                <input
+                  className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-xs text-white focus:outline-none focus:border-spirit-accent transition-colors"
+                  placeholder="Título"
+                  value={meta.title}
+                  onChange={(e) => setMeta({ title: e.target.value })}
+                />
+                <textarea
+                  className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-xs text-white resize-none focus:outline-none focus:border-spirit-accent transition-colors"
+                  rows={2}
+                  placeholder="Descripción"
+                  value={meta.description}
+                  onChange={(e) => setMeta({ description: e.target.value })}
+                />
+                <input
+                  className="bg-spirit-dark border border-spirit-border rounded-lg p-2 text-xs text-white focus:outline-none focus:border-spirit-accent transition-colors"
+                  placeholder="Tags separados por coma"
+                  value={meta.tags.join(', ')}
+                  onChange={(e) =>
+                    setMeta({ tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })
+                  }
+                />
+              </div>
+            )}
           </div>
 
           {/* ── Generar en lote ── */}
