@@ -225,7 +225,9 @@ function drawText(ctx: CanvasRenderingContext2D, config: VideoConfig, W: number,
   // Canvas font: "italic 800 42px Inter"
   ctx.font = `${styleStr}${weightStr} ${fontSize}px "${fontName}", sans-serif`
   ctx.textAlign = text.align
-  ctx.textBaseline = 'middle'
+  // Usar 'top' para que el sistema de coordenadas sea idéntico al de FFmpeg drawtext
+  // (ambos usan el borde superior del texto como ancla Y)
+  ctx.textBaseline = 'top'
 
   // Usar la misma lógica de wrapping que computeLayoutsFor (Editor.tsx)
   // para que el preview sea WYSIWYG con el renderizado FFmpeg
@@ -272,7 +274,8 @@ function drawText(ctx: CanvasRenderingContext2D, config: VideoConfig, W: number,
 
   const lineH = fontSize * text.lineHeight
   const totalH = lines.length * lineH
-  const startY = y - totalH / 2 + lineH / 2
+  // Fórmula idéntica a computeLayoutsFor: top-aligned Y coordinates
+  const startY = y - totalH / 2
 
   const hasHighlights = segments.some(s => s.styled)
 
