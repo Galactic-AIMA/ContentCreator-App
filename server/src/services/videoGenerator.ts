@@ -366,11 +366,11 @@ export async function generateVideo(
   const vfilterStr = filters.join(',')
   console.log('Final Filter String:', vfilterStr)
 
-  // Determinar posición del overlay (esquinas con margen de 30px)
-  let overlayPos = 'W-w-30:30' // default top-right
-  if (cfg.watermarkPosition === 'top-left') overlayPos = '30:30'
-  if (cfg.watermarkPosition === 'bottom-right') overlayPos = 'W-w-30:H-h-30'
-  if (cfg.watermarkPosition === 'bottom-left') overlayPos = '30:H-h-30'
+  // Determinar posición del overlay (esquinas con margen de 40px — igual que el preview canvas)
+  let overlayPos = 'W-w-40:40' // default top-right
+  if (cfg.watermarkPosition === 'top-left') overlayPos = '40:40'
+  if (cfg.watermarkPosition === 'bottom-right') overlayPos = 'W-w-40:H-h-40'
+  if (cfg.watermarkPosition === 'bottom-left') overlayPos = '40:H-h-40'
 
   const filterScriptPath = path.join(outputDir, `filters_${Date.now()}.txt`)
   if (cfg.watermark) {

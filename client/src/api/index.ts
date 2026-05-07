@@ -13,13 +13,44 @@ export const imagesApi = {
   },
 }
 
+export interface SuggestResult {
+  phrase: Phrase
+  imageId: string
+  imagePath: string
+  imageUrl: string
+  category?: string
+  pairsRemaining: number
+}
+
+export interface SuggestExhausted {
+  exhausted: true
+}
+
 export const phrasesApi = {
   list: () => api.get<Phrase[]>('/phrases').then((r) => r.data),
   random: () => api.get<Phrase>('/phrases/random').then((r) => r.data),
+  suggest: (imageId?: string) =>
+    api
+      .get<SuggestResult | SuggestExhausted>('/phrases/suggest', { params: imageId ? { imageId } : {} })
+      .then((r) => r.data),
+  suggestBatch: (count: number) =>
+    api.get<SuggestResult[]>('/phrases/suggest-batch', { params: { count } }).then((r) => r.data),
+  checkPair: (phraseId: string, imageId: string) =>
+    api
+      .get<{ used: boolean }>('/phrases/check-pair', { params: { phraseId, imageId } })
+      .then((r) => r.data),
   create: (data: Omit<Phrase, 'id'>) =>
     api.post<Phrase>('/phrases', data).then((r) => r.data),
-  bulkCreate: (texts: string[]) =>
-    api.post<Phrase[]>('/phrases/bulk', { texts }).then((r) => r.data),
+  bulkCreate: (texts: string[], category?: string) =>
+    api.post<Phrase[]>('/phrases/bulk', { texts, category }).then((r) => r.data),
+  pairsStats: () =>
+    api
+      .get<{ stats: Record<string, { pairsRemaining: number; totalImages: number }>; totalImages: number }>('/phrases/pairs-stats')
+      .then((r) => r.data),
+  generateAI: (category: string, count: number) =>
+    api.post<Phrase[]>('/phrases/generate-ai', { category, count }).then((r) => r.data),
+  approve: (approveIds: string[], discardIds: string[]) =>
+    api.patch<{ approved: number; discarded: number }>('/phrases/approve', { approveIds, discardIds }).then((r) => r.data),
   update: (id: string, data: Partial<Phrase>) =>
     api.put<Phrase>(`/phrases/${id}`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/phrases/${id}`),
@@ -45,6 +76,12 @@ export const videosApi = {
   publish: (id: string, env: 'test' | 'prod') =>
     api.post(`/videos/${id}/publish`, { env }).then((r) => r.data),
   remove: (id: string) => api.delete(`/videos/${id}`),
+  cleanup: (dryRun: boolean) =>
+    api
+      .post<{ fileCount?: number; sizeMB?: number; deleted?: number; freedMB?: number }>('/videos/cleanup', { dryRun })
+      .then((r) => r.data),
+  openOutput: (folder?: 'output' | 'images') =>
+    api.post('/videos/open-output', { folder }).then((r) => r.data),
 }
 
 export interface ComposedImageOutput {

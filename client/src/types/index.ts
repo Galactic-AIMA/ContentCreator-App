@@ -129,6 +129,8 @@ export interface VideoRecord {
   driveUrl?: string
   createdAt: string
   config: VideoConfig
+  phraseId?: string
+  filesDeleted?: boolean
 }
 
 export type TransitionType = 'fade' | 'fadeBlack' | 'none'

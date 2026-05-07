@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Wand2, Upload, Send, RotateCcw, HardDrive } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Wand2, Upload, Send, RotateCcw, HardDrive, Sparkles, AlertCircle, CheckCircle2, Trash2, Layers, XCircle, ChevronDown, FolderOpen } from 'lucide-react'
 import VideoPreview from '../components/Preview/VideoPreview'
 import VideoEditor from '../components/VideoEditor/VideoEditor'
 import ImageBank from '../components/ImageBank/ImageBank'
@@ -7,17 +7,32 @@ import PhraseBank from '../components/PhraseBank/PhraseBank'
 import ImageResult from '../components/ImageResult/ImageResult'
 import ToastContainer from '../components/Toast/Toast'
 import { useVideoStore } from '../store/videoStore'
-import { videosApi, composerApi, ComposedImageOutput } from '../api'
-import { VideoRecord, SegmentLayout } from '../types'
+import { videosApi, composerApi, phrasesApi, ComposedImageOutput, SuggestResult } from '../api'
+import { VideoRecord, SegmentLayout, VideoConfig } from '../types'
+import { usePresets } from '../hooks/usePresets'
 import { useToast } from '../hooks/useToast'
 
 type Tab = 'editor' | 'images' | 'phrases'
+
+interface BatchItem {
+  phraseText: string
+  phraseId: string
+  imageId: string
+  imagePath: string
+  imageUrl: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  jobId?: string
+  result?: VideoRecord
+  imageResults?: ComposedImageOutput[]
+  error?: string
+}
 
 export default function Editor() {
   const {
     config, meta, selectedPhraseId, setMeta,
     isGenerating, setGenerating, reset,
     mode, setMode, imageFormat, imageQuality,
+    setConfig, setText, setSelectedPhraseId,
   } = useVideoStore()
 
   const [tab, setTab] = useState<Tab>('editor')
@@ -27,11 +42,95 @@ export default function Editor() {
   const [renderProgress, setRenderProgress] = useState<number | null>(null)
   const { toasts, toast } = useToast()
 
+  const [suggestLoading, setSuggestLoading] = useState(false)
+  const [suggestChip, setSuggestChip] = useState<{ category?: string; pairsRemaining: number } | null>(null)
+  const [exhausted, setExhausted] = useState(false)
+  const [pairStatus, setPairStatus] = useState<'free' | 'used' | null>(null)
+  const pairCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [cleanupPreview, setCleanupPreview] = useState<{ fileCount: number; sizeMB: number } | null>(null)
+  const [cleanupLoading, setCleanupLoading] = useState(false)
+  const [cleanupDone, setCleanupDone] = useState<{ deleted: number; freedMB: number } | null>(null)
+
+  const [batchCount, setBatchCount] = useState(5)
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([])
+  const [batchRunning, setBatchRunning] = useState(false)
+  const [batchOpen, setBatchOpen] = useState(false)
+  const [batchPresetId, setBatchPresetId] = useState<string | null>(null)
+
+  const { builtIn: builtInPresets, userPresets, getConfigPatch, getTextPatch } = usePresets()
+
+  const handleCleanupPreview = async () => {
+    setCleanupLoading(true)
+    setCleanupDone(null)
+    try {
+      const data = await videosApi.cleanup(true)
+      setCleanupPreview({ fileCount: data.fileCount ?? 0, sizeMB: data.sizeMB ?? 0 })
+    } catch {
+      toast.error('Error consultando assets')
+    } finally {
+      setCleanupLoading(false)
+    }
+  }
+
+  const handleCleanupConfirm = async () => {
+    setCleanupLoading(true)
+    try {
+      const data = await videosApi.cleanup(false)
+      setCleanupPreview(null)
+      setCleanupDone({ deleted: data.deleted ?? 0, freedMB: data.freedMB ?? 0 })
+      setTimeout(() => setCleanupDone(null), 5000)
+    } catch {
+      toast.error('Error durante la limpieza')
+    } finally {
+      setCleanupLoading(false)
+    }
+  }
+
+  // Validar el par frase+imagen en tiempo real cuando cambia cualquiera de los dos
+  useEffect(() => {
+    if (!selectedPhraseId || !config.imageId) { setPairStatus(null); return }
+    if (pairCheckTimer.current) clearTimeout(pairCheckTimer.current)
+    pairCheckTimer.current = setTimeout(async () => {
+      try {
+        const { used } = await phrasesApi.checkPair(selectedPhraseId, config.imageId)
+        setPairStatus(used ? 'used' : 'free')
+      } catch {
+        setPairStatus(null)
+      }
+    }, 350)
+    return () => { if (pairCheckTimer.current) clearTimeout(pairCheckTimer.current) }
+  }, [selectedPhraseId, config.imageId])
+
+  const handleSuggest = async () => {
+    setSuggestLoading(true)
+    setExhausted(false)
+    setSuggestChip(null)
+    setPairStatus(null)
+    try {
+      const result = await phrasesApi.suggest()
+      if ('exhausted' in result) {
+        setExhausted(true)
+        return
+      }
+      const { phrase, imageId, imagePath, imageUrl, category, pairsRemaining } = result as SuggestResult
+      setText({ content: phrase.text })
+      setSelectedPhraseId(phrase.id)
+      setConfig({ imageId, imagePath, imagePreviewUrl: imageUrl })
+      setSuggestChip({ category, pairsRemaining })
+      setPairStatus('free')
+    } catch {
+      toast.error('Error obteniendo sugerencia')
+    } finally {
+      setSuggestLoading(false)
+    }
+  }
+
   // ── Helper: calcula layouts de segmentos para un texto y posición Y dados ──
-  const computeLayoutsFor = (textContent: string, yPercent: number) => {
+  const computeLayoutsFor = (textContent: string, yPercent: number, baseConfig?: VideoConfig) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
-    const { text, resolution } = config
+    const { text, resolution } = baseConfig ?? config
     const W = resolution.width
     const H = resolution.height
 
@@ -161,15 +260,18 @@ export default function Editor() {
   }
 
   // ── Layouts para modo VIDEO (con fases gancho/remate y efectos de animación) ──
-  const computeSegmentLayouts = () => {
+  const computeSegmentLayouts = (phraseText?: string, baseConfig?: VideoConfig) => {
+    const content = phraseText ?? (baseConfig ?? config).text.content
+    const activeConf = baseConfig ?? config
     const { wrappedLines, segmentLayouts: rawLayouts } = computeLayoutsFor(
-      config.text.content,
-      config.text.position.y
+      content,
+      activeConf.text.position.y,
+      baseConfig
     )
 
-    const splitIndex = config.text.content.indexOf('//')
+    const splitIndex = content.indexOf('//')
     const cleanSplitIndex = splitIndex !== -1
-      ? config.text.content.substring(0, splitIndex).replace(/\[[^\]]+\]/g, (m) => m.slice(1, -1).split('|')[0]).length
+      ? content.substring(0, splitIndex).replace(/\[[^\]]+\]/g, (m) => m.slice(1, -1).split('|')[0]).length
       : -1
 
     let charCount = 0
@@ -183,19 +285,22 @@ export default function Editor() {
   }
 
   // ── Layouts para modo IMAGEN (gancho a 35%, remate a 70%) ──
-  const computeImageLayouts = () => {
-    const hasSplit = config.text.content.includes('//')
+  const computeImageLayouts = (phraseText?: string, baseConfig?: VideoConfig) => {
+    const content = phraseText ?? (baseConfig ?? config).text.content
+    const activeConf = baseConfig ?? config
+    const hasSplit = content.includes('//')
     if (!hasSplit) {
       const { wrappedLines, segmentLayouts } = computeLayoutsFor(
-        config.text.content,
-        config.text.position.y
+        content,
+        activeConf.text.position.y,
+        baseConfig
       )
       return { hasSplit: false as const, wrappedLines, segmentLayouts }
     }
 
-    const [ganchoRaw, remateRaw] = config.text.content.split('//')
-    const hook = computeLayoutsFor(ganchoRaw.trim(), 35)
-    const punchline = computeLayoutsFor(remateRaw.trim(), 70)
+    const [ganchoRaw, remateRaw] = content.split('//')
+    const hook = computeLayoutsFor(ganchoRaw.trim(), 35, baseConfig)
+    const punchline = computeLayoutsFor(remateRaw.trim(), 70, baseConfig)
 
     return {
       hasSplit: true as const,
@@ -205,6 +310,85 @@ export default function Editor() {
         wrappedLines: [...hook.wrappedLines, ...punchline.wrappedLines],
         segmentLayouts: [...hook.segmentLayouts, ...punchline.segmentLayouts],
       },
+    }
+  }
+
+  // ── Generar en LOTE ──
+  const pollJobUntilDone = (jobId: string): Promise<VideoRecord> =>
+    new Promise((resolve, reject) => {
+      const iv = setInterval(async () => {
+        try {
+          const s = await videosApi.getStatus(jobId)
+          if (s.status === 'completed') { clearInterval(iv); resolve(s.result!) }
+          else if (s.status === 'failed') { clearInterval(iv); reject(new Error(s.error || 'Job failed')) }
+        } catch (err) { clearInterval(iv); reject(err) }
+      }, 1200)
+    })
+
+  const handleBatchGenerate = async () => {
+    setBatchRunning(true)
+    setBatchItems([])
+    setLastVideo(null)
+    setLastImages(null)
+    try {
+      const pairs = await phrasesApi.suggestBatch(batchCount)
+      if (!pairs.length) {
+        toast.error('Sin combinaciones disponibles para el lote')
+        return
+      }
+
+      // Aplicar preset seleccionado al config base del lote
+      const allPresets = [...builtInPresets, ...userPresets]
+      const selectedPreset = batchPresetId ? allPresets.find((p) => p.id === batchPresetId) : null
+      const batchBaseConfig: VideoConfig = selectedPreset
+        ? { ...config, ...getConfigPatch(selectedPreset), text: { ...config.text, ...getTextPatch(selectedPreset) } }
+        : config
+
+      const items: BatchItem[] = pairs.map((p) => ({
+        phraseText: p.phrase.text,
+        phraseId: p.phrase.id,
+        imageId: p.imageId,
+        imagePath: p.imagePath,
+        imageUrl: p.imageUrl,
+        status: 'pending' as const,
+      }))
+      setBatchItems([...items])
+
+      for (let i = 0; i < items.length; i++) {
+        items[i] = { ...items[i], status: 'processing' }
+        setBatchItems([...items])
+
+        try {
+          if (mode === 'video') {
+            const phraseText = items[i].phraseText
+            const itemConfig = { ...batchBaseConfig, text: { ...batchBaseConfig.text, content: phraseText }, imageId: items[i].imageId, imagePath: items[i].imagePath }
+            const { wrappedLines, segmentLayouts } = computeSegmentLayouts(phraseText, batchBaseConfig)
+            const { jobId } = await videosApi.generate(
+              { ...itemConfig, wrappedLines, segmentLayouts },
+              { title: phraseText.split('//')[0].trim().slice(0, 60), description: '', tags: [] },
+              items[i].phraseId
+            )
+            const result = await pollJobUntilDone(jobId)
+            items[i] = { ...items[i], status: 'completed', jobId, result }
+          } else {
+            const phraseText = items[i].phraseText
+            const itemConfig = { ...batchBaseConfig, text: { ...batchBaseConfig.text, content: phraseText }, imageId: items[i].imageId, imagePath: items[i].imagePath }
+            const imageLayouts = computeImageLayouts(phraseText, batchBaseConfig)
+            const params = imageLayouts.hasSplit
+              ? { config: itemConfig, format: imageFormat, quality: imageQuality, hookLayouts: imageLayouts.hook.segmentLayouts as SegmentLayout[], hookLines: imageLayouts.hook.wrappedLines, punchlineLayouts: imageLayouts.punchline.segmentLayouts as SegmentLayout[], punchlineLines: imageLayouts.punchline.wrappedLines }
+              : { config: { ...itemConfig, segmentLayouts: imageLayouts.segmentLayouts, wrappedLines: imageLayouts.wrappedLines }, format: imageFormat, quality: imageQuality }
+            const { images } = await composerApi.generateImage(params)
+            items[i] = { ...items[i], status: 'completed', imageResults: images }
+          }
+        } catch (err: any) {
+          items[i] = { ...items[i], status: 'failed', error: err.message }
+        }
+        setBatchItems([...items])
+      }
+    } catch (err: any) {
+      toast.error('Error en lote: ' + err.message)
+    } finally {
+      setBatchRunning(false)
     }
   }
 
@@ -417,11 +601,55 @@ export default function Editor() {
 
         {/* Panel de acciones */}
         <div className="flex flex-col gap-4 w-72 shrink-0">
+
+          {/* ── Sugerir combinación nueva ── */}
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleSuggest}
+              disabled={suggestLoading || isGenerating}
+              className="flex items-center justify-center gap-2 border border-spirit-accent/40 bg-spirit-accent/10 hover:bg-spirit-accent/20 disabled:opacity-50 disabled:cursor-not-allowed text-spirit-accent font-medium rounded-xl px-4 py-3 transition-all text-sm w-full"
+            >
+              <Sparkles size={14} className={suggestLoading ? 'animate-spin' : ''} />
+              {suggestLoading ? 'Buscando...' : 'Sugerir combinación nueva'}
+            </button>
+
+            {suggestChip && !exhausted && (
+              <div className="flex items-center justify-between text-xs px-3 py-2 bg-spirit-card border border-spirit-border rounded-lg">
+                <span className="text-spirit-muted">{suggestChip.category ?? 'Sin categoría'}</span>
+                <span className="text-spirit-accent font-semibold">{suggestChip.pairsRemaining} pares libres</span>
+              </div>
+            )}
+
+            {pairStatus === 'used' && (
+              <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-900/20 border border-red-700/30 rounded-lg px-3 py-2">
+                <AlertCircle size={12} /> Esta combinación ya fue usada
+              </div>
+            )}
+
+            {pairStatus === 'free' && (
+              <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-900/20 border border-green-700/30 rounded-lg px-3 py-2">
+                <CheckCircle2 size={12} /> Par disponible
+              </div>
+            )}
+
+            {exhausted && (
+              <div className="flex flex-col gap-2 p-3 bg-amber-900/20 border border-amber-700/30 rounded-lg">
+                <p className="text-xs text-amber-300 font-medium">Todas las combinaciones han sido usadas.</p>
+                <button
+                  onClick={() => setTab('phrases')}
+                  className="text-xs text-amber-400 hover:text-amber-300 underline text-left transition-colors"
+                >
+                  Generar frases nuevas con IA →
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Botón principal */}
           <div className="flex gap-2 w-full">
             <button
               onClick={mode === 'video' ? generate : generateImage}
-              disabled={isGenerating}
+              disabled={isGenerating || batchRunning}
               className="flex-1 flex items-center justify-center gap-2 bg-spirit-accent hover:bg-spirit-accent-light disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl px-4 py-3.5 transition-all glow-accent relative overflow-hidden text-sm"
             >
               <Wand2 size={16} className={isGenerating ? 'animate-spin' : ''} />
@@ -444,6 +672,126 @@ export default function Editor() {
             >
               <RotateCcw size={16} />
             </button>
+
+            <button
+              onClick={() => videosApi.openOutput()}
+              className="flex items-center justify-center bg-spirit-card border border-spirit-border hover:bg-spirit-border text-spirit-muted hover:text-white rounded-xl px-4 transition-colors shrink-0"
+              title="Abrir carpeta output"
+            >
+              <FolderOpen size={16} />
+            </button>
+          </div>
+
+          {/* ── Generar en lote ── */}
+          <div className="border-t border-spirit-border/30 pt-3">
+            <button
+              onClick={() => setBatchOpen((v) => !v)}
+              className="flex items-center justify-between w-full text-xs text-spirit-muted hover:text-white transition-colors"
+            >
+              <span className="flex items-center gap-1.5 font-medium">
+                <Layers size={12} /> Generar en lote
+              </span>
+              <ChevronDown size={11} className={`transition-transform duration-200 ${batchOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {batchOpen && (
+              <div className="flex flex-col gap-2 mt-3">
+                {/* Selector de preset */}
+                <div className="flex flex-col gap-1">
+                  <p className="text-[10px] uppercase tracking-widest text-spirit-muted font-semibold">Preset</p>
+                  <div className="flex flex-wrap gap-1">
+                    <button
+                      onClick={() => setBatchPresetId(null)}
+                      disabled={batchRunning}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                        batchPresetId === null
+                          ? 'bg-spirit-accent text-white'
+                          : 'bg-spirit-dark border border-spirit-border text-spirit-muted hover:text-white'
+                      }`}
+                    >
+                      Auto
+                    </button>
+                    {[...builtInPresets, ...userPresets].map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => setBatchPresetId(preset.id)}
+                        disabled={batchRunning}
+                        className={`px-2 py-1 rounded text-[10px] font-semibold transition-colors ${
+                          batchPresetId === preset.id
+                            ? 'bg-spirit-accent text-white'
+                            : 'bg-spirit-dark border border-spirit-border text-spirit-muted hover:text-white'
+                        }`}
+                      >
+                        {preset.name.length > 11 ? preset.name.slice(0, 9) + '…' : preset.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-1.5">
+                  {([3, 5, 10] as const).map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setBatchCount(n)}
+                      disabled={batchRunning}
+                      className={`w-10 rounded-lg py-2 text-xs font-bold transition-colors ${
+                        batchCount === n
+                          ? 'bg-spirit-accent text-white'
+                          : 'bg-spirit-dark border border-spirit-border text-spirit-muted hover:text-white'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    onClick={handleBatchGenerate}
+                    disabled={batchRunning || isGenerating}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold bg-spirit-accent/20 border border-spirit-accent/40 text-spirit-accent hover:bg-spirit-accent/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Layers size={12} className={batchRunning ? 'animate-spin' : ''} />
+                    {batchRunning ? 'Generando...' : `Generar ×${batchCount}`}
+                  </button>
+                </div>
+
+                {batchItems.length > 0 && (() => {
+                  const done = batchItems.filter((it) => it.status === 'completed' || it.status === 'failed').length
+                  const pct = Math.round((done / batchItems.length) * 100)
+                  return (
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between text-xs text-spirit-muted">
+                        <span>{done}/{batchItems.length} completados</span>
+                        <span className={done === batchItems.length ? 'text-green-400' : ''}>{pct}%</span>
+                      </div>
+                      <div className="h-1 bg-spirit-border rounded-full overflow-hidden">
+                        <div className="h-full bg-spirit-accent transition-all duration-500 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex flex-col gap-1 max-h-56 overflow-y-auto mt-0.5">
+                        {batchItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 px-2.5 py-2 bg-spirit-dark border border-spirit-border/40 rounded-lg text-xs">
+                            {item.status === 'completed' && <CheckCircle2 size={12} className="text-green-400 shrink-0" />}
+                            {item.status === 'processing' && <Wand2 size={12} className="text-spirit-accent animate-spin shrink-0" />}
+                            {item.status === 'pending' && <div className="w-3 h-3 rounded-full border border-spirit-border shrink-0" />}
+                            {item.status === 'failed' && <XCircle size={12} className="text-red-400 shrink-0" />}
+                            <span className="flex-1 text-spirit-muted truncate">
+                              {item.phraseText.split('//')[0].trim().slice(0, 35)}
+                            </span>
+                            {item.status === 'completed' && mode === 'video' && item.result && (
+                              <a href={item.result.publicUrl} target="_blank" rel="noreferrer" className="text-spirit-accent hover:text-white shrink-0 font-medium">↗</a>
+                            )}
+                            {item.status === 'completed' && mode === 'image' && item.imageResults?.[0] && (
+                              <a href={item.imageResults[0].publicUrl} target="_blank" rel="noreferrer" className="text-spirit-accent hover:text-white shrink-0 font-medium">↗</a>
+                            )}
+                            {item.status === 'failed' && (
+                              <span className="text-red-400/70 shrink-0 text-[10px]">Error</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
           </div>
 
           {/* Resultado VIDEO */}
@@ -497,6 +845,60 @@ export default function Editor() {
               />
             </div>
           )}
+
+          {/* ── Limpieza de assets ── */}
+          <div className="mt-auto pt-2 border-t border-spirit-border/50">
+            {!cleanupPreview && !cleanupDone && (
+              <button
+                onClick={handleCleanupPreview}
+                disabled={cleanupLoading}
+                className="flex items-center justify-center gap-1.5 w-full text-xs text-gray-600 hover:text-gray-400 disabled:opacity-40 py-2 transition-colors"
+              >
+                <Trash2 size={11} />
+                {cleanupLoading ? 'Consultando...' : 'Limpiar assets antiguos'}
+              </button>
+            )}
+
+            {cleanupPreview && (
+              <div className="flex flex-col gap-2 p-3 bg-spirit-card border border-spirit-border rounded-xl animate-fadeInUp">
+                <p className="text-xs text-gray-300 font-medium">
+                  Se liberarán <span className="text-white">{cleanupPreview.sizeMB} MB</span>
+                  {' '}—{' '}
+                  <span className="text-white">{cleanupPreview.fileCount} archivos</span> de más de 30 días
+                </p>
+                {cleanupPreview.fileCount === 0 ? (
+                  <p className="text-xs text-gray-500">No hay archivos para limpiar.</p>
+                ) : (
+                  <p className="text-[10px] text-gray-500">
+                    Los registros en videos.json se conservan (huella de pares intacta).
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  {cleanupPreview.fileCount > 0 && (
+                    <button
+                      onClick={handleCleanupConfirm}
+                      disabled={cleanupLoading}
+                      className="flex-1 text-xs bg-red-800/60 hover:bg-red-700/70 disabled:opacity-50 text-red-200 rounded-lg px-3 py-1.5 font-medium transition-colors"
+                    >
+                      {cleanupLoading ? 'Limpiando...' : 'Confirmar limpieza'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setCleanupPreview(null)}
+                    className="flex-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg px-3 py-1.5 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cleanupDone && (
+              <p className="text-xs text-green-400 text-center py-2">
+                ✓ {cleanupDone.deleted} archivos eliminados — {cleanupDone.freedMB} MB liberados
+              </p>
+            )}
+          </div>
         </div>
       </main>
 

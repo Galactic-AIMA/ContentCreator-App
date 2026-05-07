@@ -9,46 +9,48 @@ export interface VideoMeta {
   tags: string[]
 }
 
-const FOOTER = 'El proceso no se negocia.\n@bebetter.path ⚔️'
+const FOOTER = 'Tu cuerpo sabe.\n@inteligencia.organica 🌿'
 
 export async function generateMeta(phrase: string): Promise<VideoMeta> {
-  const prompt = `Eres un copywriter experto en contenido motivacional para Instagram Reels y YouTube Shorts de la marca "bebetter".
+  const prompt = `Eres un copywriter experto en contenido de bienestar consciente para Instagram Reels y YouTube Shorts de la marca "Inteligencia Orgánica".
 
-Dado el siguiente texto que aparecera en un video:
+La filosofía de la marca: validar la experiencia humana a través de la biología. El cuerpo no está roto, está respondiendo. Tono cálido, directo y empático — nunca moralizador ni de autoayuda vacía.
+
+Dado el siguiente texto que aparecerá en un video:
 "${phrase}"
 
 Genera un JSON (sin markdown, solo el objeto JSON puro) con estas claves:
 
-- "title": titulo corto y llamativo (max 60 caracteres, en español, sin emojis, sin signos de puntuacion como dos puntos o comillas que puedan romper nombres de archivo)
+- "title": título corto y llamativo (máx 60 caracteres, en español, sin emojis, sin signos de puntuación como dos puntos o comillas que puedan romper nombres de archivo)
 
-- "description": descripcion estructurada con el siguiente formato exacto:
+- "description": descripción estructurada con el siguiente formato exacto:
 
-TITULAR: Una frase corta (maximo 6 palabras) que sea una bofetada visual. Debe generar curiosidad o incomodidad.
+TITULAR: Una frase corta (máximo 6 palabras) que genere reconocimiento o curiosidad. Que el lector sienta "eso me pasa a mí".
 
-[linea en blanco]
+[línea en blanco]
 
 CUERPO:
 
-[parrafo 1: describe el problema o la debilidad comun de la sociedad]
+[párrafo 1: describe la experiencia humana común que valida la frase, con el mecanismo biológico detrás]
 
-[parrafo 2: da la solucion estoica o la verdad cruda]
+[párrafo 2: explica por qué el cuerpo responde así — sin juicio, con ciencia accesible]
 
-[parrafo 3: llamado a la accion mental, no de "dar like" sino de "empezar a actuar"]
+[párrafo 3: afirmación que devuelve poder al lector. No "haz esto", sino "tú ya tienes esto"]
 
-[linea en blanco]
+[línea en blanco]
 
-El proceso no se negocia.
-@bebetter.path ⚔️
+Tu cuerpo sabe.
+@inteligencia.organica 🌿
 
-Reglas de redaccion:
-- Lenguaje masculino, fuerte y directo
-- No uses emojis felices. Solo ⚔️ o 🔥 si es muy necesario
-- Evita palabras como "increible", "asombroso" o "magico". Usa "brutal", "crudo", "inevitable", "deuda", "disciplina"
-- Prohibido el optimismo toxico. Se respeta el dolor del proceso
+Reglas de redacción:
+- Lenguaje inclusivo y cálido, sin ser condescendiente
+- No uses palabras de autoayuda vacía como "increíble", "mágico", "manifiesta"
+- Usa vocabulario concreto: cortisol, sistema nervioso, ritmo circadiano, neurotransmisores
+- Prohibido el optimismo tóxico. Se valida el dolor y la incomodidad como señales del cuerpo
 
-- "tags": array de exactamente 10 hashtags relevantes que mezclen el tema de la frase con la marca y el nicho (estoicismo, disciplina, etc.). Sin el simbolo #, solo el texto.
+- "tags": array de exactamente 10 hashtags relevantes que mezclen el tema biológico con bienestar, autocuidado y la marca. Sin el símbolo #, solo el texto.
 
-Responde UNICAMENTE con el JSON, sin explicaciones ni markdown.`
+Responde ÚNICAMENTE con el JSON, sin explicaciones ni markdown.`
 
   let result
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -67,7 +69,7 @@ Responde UNICAMENTE con el JSON, sin explicaciones ni markdown.`
 
   try {
     const parsed = JSON.parse(text) as VideoMeta
-    if (!parsed.description.includes('@bebetter.path')) {
+    if (!parsed.description.includes('@inteligencia.organica')) {
       parsed.description = parsed.description.trimEnd() + '\n\n' + FOOTER
     }
     return parsed

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
 import fs from 'fs'
+import { exec } from 'child_process'
 import axios from 'axios'
 import { generateVideo } from '../services/videoGenerator'
 import { uploadVideoToS3 } from '../services/s3Service'
@@ -9,6 +10,7 @@ import { uploadToDrive } from '../services/driveService'
 import { sendToWebhook } from '../services/webhookService'
 import { GenerateVideoRequest, VideoRecord, Phrase } from '../types'
 import { config } from '../config'
+import { cleanupPreview, runCleanup } from '../services/cleanupService'
 
 const router = Router()
 
@@ -67,7 +69,7 @@ router.post('/generate', async (req, res) => {
     const job = queueService.addJob(id, {
       execute: async (onProgress: (p: number) => void) => {
         const result = await generateVideo(vidConfig, outputName, onProgress)
-        
+
         const record: VideoRecord = {
           id,
           filename: result.filename,
@@ -84,7 +86,11 @@ router.post('/generate', async (req, res) => {
         const videos = loadVideos()
         videos.unshift(record)
         saveVideos(videos)
-        
+
+        // Registrar uso del par frase+imagen al completar la generación
+        if (phraseId) incrementPhraseUsage(phraseId)
+        if (vidConfig.imageId) incrementImageUsage(vidConfig.imageId)
+
         return record
       }
     })
@@ -153,10 +159,6 @@ router.post('/:id/upload-drive', async (req, res) => {
 
     saveVideos(videos)
 
-    // Incrementar contadores solo al subir a Drive
-    if (video.phraseId) incrementPhraseUsage(video.phraseId)
-    if (video.config.imageId) incrementImageUsage(video.config.imageId)
-
     res.json({ success: true, driveUrl })
   } catch (err: any) {
     res.status(500).json({ error: err.message })
@@ -186,6 +188,31 @@ router.post('/:id/publish', async (req, res) => {
     )
 
     res.json({ success: true, sentTo: env, videoUrl })
+  } catch (err: any) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /api/videos/open-output — abre la carpeta de output en el explorador de archivos
+router.post('/open-output', (req, res) => {
+  const { folder = 'output' } = req.body ?? {}
+  const folderPath = folder === 'images' ? config.paths.outputImages : config.paths.output
+  exec(`explorer "${folderPath}"`, (err) => {
+    if (err) return res.status(500).json({ error: err.message })
+  })
+  res.json({ success: true, path: folderPath })
+})
+
+// POST /api/videos/cleanup — limpieza manual de assets viejos
+// Con { dryRun: true } retorna preview sin borrar nada.
+router.post('/cleanup', (req, res) => {
+  const { dryRun = false } = req.body ?? {}
+  try {
+    if (dryRun) {
+      return res.json(cleanupPreview())
+    }
+    const result = runCleanup()
+    res.json(result)
   } catch (err: any) {
     res.status(500).json({ error: err.message })
   }

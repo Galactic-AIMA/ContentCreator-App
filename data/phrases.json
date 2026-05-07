@@ -52,7 +52,7 @@
     "text": "Tu respiración es el único botón de control manual que tiene tu cuerpo. Al alargar tu exhalación le envía una señal mecánica directa a tu corazón para que baje el ritmo. Tú tienes el mando en medio del caos.",
     "category": "Ritmo Vital",
     "author": "Inteligencia Orgánica",
-    "usageCount": 0,
+    "usageCount": 2,
     "status": "active"
   },
   {
@@ -60,7 +60,7 @@
     "text": "Si tu mente no para de hablar a las tres de la mañana... es tu cerebro intentando procesar datos que dejaste sin resolver en el día. Escríbelos, dile a tu mente que ya los guardaste, y duerme.",
     "category": "Ritmo Vital",
     "author": "Inteligencia Orgánica",
-    "usageCount": 0,
+    "usageCount": 4,
     "status": "active"
   },
   {
@@ -75,6 +75,278 @@
     "id": "io-10",
     "text": "Sentir miedo e incertidumbre antes de un gran cambio es la mejor señal. Significa que tu cerebro está recolectando toda la energía necesaria para construir nuevas rutas en tu vida. Estás a punto de evolucionar.",
     "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "48552daa-5ddb-493f-8dcb-6d3ba46e7d39",
+    "text": "¿Te cuesta concentrarte por la tarde? // Tu ritmo circadiano influye en la producción de melatonina y cortisol, afectando tu alerta; organiza tus tareas según tus picos naturales y recupera el control de tu energía.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "pending"
+  },
+  {
+    "id": "7192b329-6608-4bb0-a53c-b60a4172959e",
+    "text": "¿A veces sientes que necesitas alejarte de todo el ruido? // La sobrecarga sensorial activa tu sistema nervioso simpático, generando estrés; busca espacios de calma para activar tu sistema parasimpático y reconecta con tu centro.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "pending"
+  },
+  {
+    "id": "818d92ed-020a-493e-ab31-78e5801173ed",
+    "text": "¿Alguna vez sentiste que el tiempo se detiene cuando haces algo que amas? // Tu cerebro libera dopamina, ralentizando tu percepción y enfocando tu atención. ¡Aprovecha esos momentos para crear!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 1,
+    "status": "active"
+  },
+  {
+    "id": "785dd6ab-5d4e-41c4-b626-260add029303",
+    "text": "¿Te ha pasado que bostezas y contagias a otros? // Las neuronas espejo activan la empatía, impulsándonos a imitar e internalizar las emociones ajenas. ¡Conecta con los demás desde la comprensión!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "2df7f8c6-fc48-438c-a5f8-25366060d87c",
+    "text": "¿Alguna vez te sentiste instantáneamente atraído por alguien? // Las feromonas, esos mensajeros químicos invisibles, influyen en la atracción y la conexión social, ¡Confía en tu instinto!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "00daf5fd-7471-4f41-8b94-d89c00cbca8d",
+    "text": "¿Sentiste mariposas en el estómago antes de un evento importante? // El eje intestino-cerebro conecta tus emociones con tu digestión, generando esa sensación de nerviosismo. ¡Respira profundo y reconéctate con tu centro!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "0fdc2e38-3bd2-4818-bc79-11631a76ebb0",
+    "text": "¿Te has despertado justo antes de que suene la alarma? // Tu ritmo circadiano, el reloj interno del cuerpo, anticipa eventos rutinarios para optimizar tu energía. ¡Escucha tu cuerpo y respeta tus ciclos!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "8a390f25-1ef2-4b8b-a7ff-eb8c7a244da2",
+    "text": "¿Te sientes mejor después de pasar tiempo en la naturaleza? // La exposición a fitoncidas, compuestos liberados por los árboles, fortalece tu sistema inmunológico y reduce el estrés. ¡Reconecta con la Tierra para sanar!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "c0f0622e-76d5-4d7b-91d0-e45ab35eeb21",
+    "text": "¿Alguna vez has sentido que 'lees la mente' de alguien cercano? // La interocepción, la conciencia de tus propios estados internos, te permite anticipar las reacciones y emociones de quienes conoces bien. ¡Confía en tu intuición relacional!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "2558a627-5ee4-42f7-ba68-e56ae927f337",
+    "text": "¿Te sientes más creativo después de una buena noche de sueño? // Durante el sueño REM, tu cerebro consolida recuerdos y establece conexiones inesperadas. ¡Prioriza el descanso para desbloquear tu potencial!",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "3afa7c2a-3322-42d2-be0e-1f8aa13593cf",
+    "text": "¿A veces te sientes inexplicablemente atraído por ciertos alimentos? // Tu cuerpo podría estar señalando deficiencias nutricionales específicas a través de antojos intensos, orquestados por neurotransmisores buscando equilibrio; escucha esa sabiduría interna, y elige conscientemente nutrirte.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "1af85d93-1c54-49c6-bc60-64b9f0ea6c03",
+    "text": "¿Te has sentido alguna vez paralizado por el miedo ante una decisión importante? // Es tu amígdala secuestrando la razón; respira profundo, permite que la corteza prefrontal recupere el control y recuerda que tienes la capacidad de elegir tu respuesta.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "95da87c1-751d-4b84-b02b-3ffa3eb47254",
+    "text": "¿Te cuesta concentrarte después de una comida copiosa? // El flujo sanguíneo se desvía hacia tu sistema digestivo, dejando menos energía para tu cerebro; honra este proceso natural y dale a tu cuerpo el descanso que necesita para recargar y recuperar tu foco.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "e4d36816-adbe-4ca7-9d0f-27eaa5e77797",
+    "text": "¿Sientes la necesidad de moverte cuando estás bajo estrés? // El movimiento libera endorfinas y reduce el cortisol, el químico del estrés; confía en tu instinto, baila, camina, ¡libera la tensión y reconecta con tu bienestar innato!",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "949e3b01-6757-491b-a3b6-9fdb79f47c59",
+    "text": "¿Te ruborizas al sentirte avergonzado? // Es una respuesta involuntaria del sistema nervioso simpático que dilata los vasos sanguíneos; acéptalo como una señal de tu vulnerabilidad auténtica y permítete ser humano, imperfecto y valioso.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "af0734b3-0a8d-48e7-901c-407f9d1a5fad",
+    "text": "¿Te sientes somnoliento por la tarde? // Tus ritmos circadianos están marcando un ciclo natural de menor energía; permítete una pausa, escucha a tu cuerpo, y optimiza tu energía gestionando tus tiempos inteligentemente.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "e794c7fb-5a75-475e-abbf-c02d28ea3545",
+    "text": "¿Te duele el estómago cuando estás nervioso? // El eje intestino-cerebro está en plena comunicación, liberando neurotransmisores que impactan directamente en tu digestión; reconoce esta conexión profunda y nutre tanto tu mente como tu vientre.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "c016b150-9fee-4bba-9f77-74af451b2c0e",
+    "text": "¿Lloras cuando estás muy feliz o muy triste? // Las lágrimas emocionales contienen hormonas del estrés y analgésicos naturales, liberando tensión y facilitando la regulación emocional; permítete sentir plenamente, y confía en la capacidad de tu cuerpo para sanar y equilibrarte.",
+    "category": "Sabiduría del Cuerpo",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "6e1ab682-de76-447d-ab78-4861b5a561b1",
+    "text": "¿Alguna vez sentiste un nudo en el estómago antes de una presentación? // La conexión intestino-cerebro libera cortisol, la hormona del estrés, preparándote para la acción. Confía en esa intuición, te está impulsando a dar lo mejor.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "11a740d0-7cbc-4ca8-9d82-73b181607288",
+    "text": "¿Te ruborizas cuando te alaban? // El sistema nervioso simpático dilata los vasos sanguíneos en tu rostro, una reacción involuntaria a la atención. Acepta ese sonrojo como una señal de tu genuina humildad y autenticidad.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "497e5e41-d8aa-42d3-9e1d-0423ed9c1b88",
+    "text": "¿Lloras viendo una película triste? // Las neuronas espejo activan las mismas áreas de tu cerebro que la persona que sufre en pantalla, permitiéndote sentir su dolor. Permítete sentir esas emociones, te conectan con la humanidad.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "500d8e10-f805-4aae-a5a7-0628bd389040",
+    "text": "¿Se te acelera el pulso al ver a alguien atractivo? // La liberación de dopamina y norepinefrina estimula el sistema cardiovascular, preparándote para la posible interacción. Reconoce esa chispa, es tu biología diciéndote que la vida te ofrece oportunidades.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "b99e03ad-8a77-43ce-9273-3221c800f977",
+    "text": "¿Sientes la necesidad de bostezar cuando alguien más lo hace? // Las neuronas espejo también imitan este comportamiento, posiblemente para sincronizar al grupo y fomentar la atención colectiva. Únete al bostezo, es una forma inconsciente de conexión social.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "5911a81d-9b73-41cc-9ae8-59d74411dd3a",
+    "text": "¿Te sientes más tranquilo en la naturaleza? // La exposición a fitoncidas, compuestos liberados por los árboles, reduce los niveles de cortisol y aumenta la actividad de las células NK del sistema inmune. Sumérgete en lo verde, tu cuerpo sabe cómo sanar.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "ad11453c-3d03-4116-906b-ff8f43945315",
+    "text": "¿Te resulta difícil concentrarte con el estómago vacío? // La glucosa es el principal combustible del cerebro, y su deficiencia afecta la función cognitiva, desde la atención hasta la memoria. Escucha a tu cuerpo, nutrirte es potenciar tu mente.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "4818c9e7-e466-4295-b3f4-ea9f4e986f76",
+    "text": "¿Te sientes inexplicablemente irritable con falta de sueño? // La privación de sueño altera la producción de neurotransmisores como la serotonina, que regulan el estado de ánimo. Prioriza tu descanso, eres más fuerte cuando estás bien recargado.",
+    "category": "Sincronía Natural",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "c827b504-8ef9-4ab2-81b9-3f90f45dbccc",
+    "text": "Te sientes especialmente creativo por la mañana, pero tu mente se nubla al atardecer? // Es el cortisol, nuestra hormona del despertar, alcanzando su pico matutino y descendiendo gradualmente. Escucha a tu cuerpo y programa tus tareas creativas cuando tu cortisol te impulse al máximo.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 1,
+    "status": "active"
+  },
+  {
+    "id": "cd30bfab-d41e-46e6-bd2b-7049e9150ba3",
+    "text": "Ese abrazo que tanto necesitabas te calmó al instante? // La oxitocina, liberada por el contacto físico, reduce el cortisol y promueve la relajación. Busca esos momentos de conexión, son tu antídoto natural contra el estrés.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 1,
+    "status": "active"
+  },
+  {
+    "id": "189eddd5-e8f9-4b8e-9c76-a508b1d61526",
+    "text": "A veces, la comida te consuela, pero luego te sientes culpable? // El azúcar y las grasas activan el sistema de recompensa del cerebro, liberando dopamina. En lugar de culparte, reconoce la necesidad y busca fuentes de placer más sostenibles y nutritivas.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "3886f893-6b0b-4c2a-9a2e-74d38352d136",
+    "text": "Te cuesta concentrarte después de una noche en vela? // La falta de sueño altera la producción de melatonina y afecta la función cognitiva. Prioriza el descanso, es la base para un cerebro ágil y enfocado.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "42432767-3a4e-4c0c-8548-853aaa7eb963",
+    "text": "Sientes mariposas en el estómago antes de una presentación importante? // Es la adrenalina, preparando tu cuerpo para la acción. Reconoce esa energía como un impulso, no como un obstáculo, y canalízala hacia tu objetivo.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "adfa4499-afc8-4abe-a162-86872d1d2528",
+    "text": "Te ruborizas cuando te elogian? // Es una respuesta involuntaria del sistema nervioso simpático que dilata los vasos sanguíneos. Acepta el cumplido con gratitud, es una señal de tu autenticidad.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "f9074582-4743-4266-b7e0-c100b018a2dc",
+    "text": "La música te transporta a otro lugar? // Las vibraciones sonoras activan áreas del cerebro asociadas con las emociones y la memoria. Crea tu banda sonora personal y permite que la música te guíe hacia estados de ánimo positivos.",
+    "category": "Ritmo Vital",
+    "author": "Inteligencia Orgánica",
+    "usageCount": 0,
+    "status": "active"
+  },
+  {
+    "id": "bea6af3b-3b46-4bd9-babc-a92c49a6ec21",
+    "text": "Te sientes irritable cuando tienes hambre? // La glucosa es el combustible principal del cerebro, y su escasez afecta tu estado de ánimo. Mantén tus niveles de azúcar estables con comidas regulares y nutritivas, y recupera el control de tus emociones.",
+    "category": "Ritmo Vital",
     "author": "Inteligencia Orgánica",
     "usageCount": 0,
     "status": "active"

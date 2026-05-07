@@ -109,10 +109,10 @@ export async function generateImage(
     ...drawTextFilters,
   ]
 
-  let overlayPos = 'W-w-30:30'
-  if (cfg.watermarkPosition === 'top-left') overlayPos = '30:30'
-  if (cfg.watermarkPosition === 'bottom-right') overlayPos = 'W-w-30:H-h-30'
-  if (cfg.watermarkPosition === 'bottom-left') overlayPos = '30:H-h-30'
+  let overlayPos = 'W-w-40:40'
+  if (cfg.watermarkPosition === 'top-left') overlayPos = '40:40'
+  if (cfg.watermarkPosition === 'bottom-right') overlayPos = 'W-w-40:H-h-40'
+  if (cfg.watermarkPosition === 'bottom-left') overlayPos = '40:H-h-40'
 
   const filterScriptPath = path.join(outputDir, `img_filters_${Date.now()}.txt`)
   if (cfg.watermark) {

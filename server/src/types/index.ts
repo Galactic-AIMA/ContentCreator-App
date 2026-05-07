@@ -23,11 +23,14 @@ export interface SegmentLayout {
   x: number
   y: number
   color: string
+  phase?: 1 | 2
+  lineW?: number
 }
 
 export interface VideoConfig {
   imageId: string
   imagePath: string
+  imagePreviewUrl?: string
   duration: number
   transition: 'fade' | 'fadeBlack' | 'none'
   transitionDuration: number
@@ -39,6 +42,8 @@ export interface VideoConfig {
   style: VideoStyle
   textEffect: TextEffect
   watermark?: boolean
+  watermarkPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  cinematicGrain?: boolean
 }
 
 export interface VideoRecord {
@@ -60,7 +65,7 @@ export interface VideoRecord {
 export interface Phrase {
   id: string
   text: string
-  category?: 'Sincronía Natural' | 'Sabiduría del Cuerpo' | 'Ritmo Vital'
+  category?: string
   author?: string
   usageCount?: number
   status?: 'active' | 'pending'
