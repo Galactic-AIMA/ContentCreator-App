@@ -235,7 +235,8 @@ export default function Editor() {
         ctx.font = currentIsStyled
           ? `${styleStr}800 ${text.fontSize}px "${fontName}", sans-serif`
           : `${styleStr}${weightStr} ${text.fontSize}px "${fontName}", sans-serif`
-        totalLineWidth += ctx.measureText(segmentText).width
+        // Aplicar factor 1.15x para que lineW coincida con la métrica real de FFmpeg
+        totalLineWidth += ctx.measureText(segmentText).width * 1.15
         lineOffset += segLength
       }
 
@@ -249,7 +250,8 @@ export default function Editor() {
         ctx.font = seg.isStyled
           ? `${styleStr}800 ${text.fontSize}px "${fontName}", sans-serif`
           : `${styleStr}${weightStr} ${text.fontSize}px "${fontName}", sans-serif`
-        const segW = ctx.measureText(seg.text).width
+        // Aplicar factor 1.15x para que segW coincida con la métrica real de FFmpeg
+        const segW = ctx.measureText(seg.text).width * 1.15
         segmentLayouts.push({
           text: seg.text,
           x: drawX,
