@@ -183,7 +183,9 @@ export default function Editor() {
 
     const lineH = text.fontSize * text.lineHeight
     const totalH = lines.length * lineH
-    const startY = y - totalH / 2 + lineH / 2
+    // Y coordinates are for FFmpeg drawtext which uses TOP of text as anchor.
+    // So startY = top edge of first line.
+    const startY = y - totalH / 2
 
     const segmentLayouts: any[] = []
     let charIndex = 0
@@ -235,8 +237,7 @@ export default function Editor() {
         ctx.font = currentIsStyled
           ? `${styleStr}800 ${text.fontSize}px "${fontName}", sans-serif`
           : `${styleStr}${weightStr} ${text.fontSize}px "${fontName}", sans-serif`
-        // Aplicar factor 1.15x para que lineW coincida con la métrica real de FFmpeg
-        totalLineWidth += ctx.measureText(segmentText).width * 1.15
+        totalLineWidth += ctx.measureText(segmentText).width
         lineOffset += segLength
       }
 
@@ -250,8 +251,7 @@ export default function Editor() {
         ctx.font = seg.isStyled
           ? `${styleStr}800 ${text.fontSize}px "${fontName}", sans-serif`
           : `${styleStr}${weightStr} ${text.fontSize}px "${fontName}", sans-serif`
-        // Aplicar factor 1.15x para que segW coincida con la métrica real de FFmpeg
-        const segW = ctx.measureText(seg.text).width * 1.15
+        const segW = ctx.measureText(seg.text).width
         segmentLayouts.push({
           text: seg.text,
           x: drawX,

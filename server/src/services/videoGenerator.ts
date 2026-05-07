@@ -175,7 +175,7 @@ export async function generateVideo(
             `fontsize=${text.fontSize}:` +
             `fontcolor=${segObj.color.replace('#', '0x')}:` +
             `enable='${enableExpr}':` +
-            `x=${twXExpr}:y=(${segObj.y})-(th/2)` +
+            `x=${twXExpr}:y=${segObj.y}` +
             strokeOpts +
             shadowOpts
           )
@@ -254,7 +254,7 @@ export async function generateVideo(
           `fontsize=${text.fontSize}:` +
           `fontcolor=${segObj.color.replace('#', '0x')}:` +
           `alpha='${alphaExpr}':` +
-          `x=${finalXExpr}:y=(${yExpr})-(th/2)` +
+          `x=${finalXExpr}:y=${yExpr}` +
           strokeOpts +
           shadowOpts
         )
