@@ -3,37 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import { VideoConfig, SegmentLayout } from '../types'
 import { config } from '../config'
-
-const WINDOWS_FONTS = 'C:/Windows/Fonts'
-
-const FONT_FALLBACKS: Record<string, string> = {
-  'Inter':              `${WINDOWS_FONTS}/arial.ttf`,
-  'Bebas Neue':         `${WINDOWS_FONTS}/impact.ttf`,
-  'Cinzel':             `${WINDOWS_FONTS}/georgiab.ttf`,
-  'Lora':               `${WINDOWS_FONTS}/georgia.ttf`,
-  'Montserrat':         `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Oswald':             `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Outfit':             `${WINDOWS_FONTS}/calibri.ttf`,
-  'Playfair Display':   `${WINDOWS_FONTS}/georgiab.ttf`,
-  'Poppins':            `${WINDOWS_FONTS}/arial.ttf`,
-  'PT Serif':           `${WINDOWS_FONTS}/times.ttf`,
-  'Raleway':            `${WINDOWS_FONTS}/calibri.ttf`,
-  'Roboto Slab':        `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Space Grotesk':      `${WINDOWS_FONTS}/consola.ttf`,
-}
-
-function resolveFontPath(fontName: string): string {
-  const cleanName = fontName.replace(/'/g, '').split(',')[0].trim()
-  const customFont = path.join(config.paths.fonts, `${cleanName}.ttf`)
-  const resolved = fs.existsSync(customFont)
-    ? customFont
-    : (FONT_FALLBACKS[cleanName] || `${WINDOWS_FONTS}/arial.ttf`)
-  return resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, '$1\\:')
-}
-
-function escapeLine(text: string): string {
-  return text.replace(/'/g, "''").replace(/:/g, '\\:')
-}
+import { resolveFontPath, escapeLine } from '../utils/fonts'
 
 // Mapea calidad 70-100% → FFmpeg q:v 10-2 (inverso: mayor calidad = menor q:v)
 function jpegQualityToFfmpeg(quality: number): number {

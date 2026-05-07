@@ -3,6 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import { VideoConfig } from '../types'
 import { config } from '../config'
+import { FONT_FALLBACKS, resolveFontPath, escapeLine } from '../utils/fonts'
 
 // Resolver la ruta de ffmpeg automáticamente (winget instala en AppData)
 function findFfmpegPath(): string {
@@ -15,7 +16,7 @@ function findFfmpegPath(): string {
 
   // 2. Buscar en la ruta típica de winget
   const wingetBase = path.join(
-    process.env.LOCALAPPDATA || 'C:/Users/camil/AppData/Local',
+    process.env.LOCALAPPDATA || '',
     'Microsoft/WinGet/Packages'
   )
   if (fs.existsSync(wingetBase)) {
@@ -55,33 +56,6 @@ export interface GenerateResult {
   publicUrl: string
 }
 
-const WINDOWS_FONTS = 'C:/Windows/Fonts'
-
-// Mapeo de fuentes Google Font CSS → archivos de sistema Windows como fallback
-const FONT_FALLBACKS: Record<string, string> = {
-  // Nombres nuevos (formato Google Font CSS)
-  'Inter':              `${WINDOWS_FONTS}/arial.ttf`,
-  'Bebas Neue':         `${WINDOWS_FONTS}/impact.ttf`,
-  'Cinzel':             `${WINDOWS_FONTS}/georgiab.ttf`,
-  'Lora':               `${WINDOWS_FONTS}/georgia.ttf`,
-  'Montserrat':         `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Oswald':             `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Outfit':             `${WINDOWS_FONTS}/calibri.ttf`,
-  'Playfair Display':   `${WINDOWS_FONTS}/georgiab.ttf`,
-  'Poppins':            `${WINDOWS_FONTS}/arial.ttf`,
-  'PT Serif':           `${WINDOWS_FONTS}/times.ttf`,
-  'Raleway':            `${WINDOWS_FONTS}/calibri.ttf`,
-  'Roboto Slab':        `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Space Grotesk':      `${WINDOWS_FONTS}/consola.ttf`,
-  // Nombres legacy (compatibilidad con configs antiguas)
-  'Montserrat-Bold':       `${WINDOWS_FONTS}/arialbd.ttf`,
-  'Montserrat-Regular':    `${WINDOWS_FONTS}/arial.ttf`,
-  'Playfair-Bold':         `${WINDOWS_FONTS}/georgiab.ttf`,
-  'Lato-Regular':          `${WINDOWS_FONTS}/calibri.ttf`,
-  'Oswald-Bold':           `${WINDOWS_FONTS}/arialbd.ttf`,
-  'RobotoCondensed-Bold':  `${WINDOWS_FONTS}/arialbd.ttf`,
-}
-
 function estimateTextWidth(text: string, fontSize: number): number {
   return text.length * fontSize * 0.55
 }
@@ -102,22 +76,6 @@ function wrapText(text: string, fontSize: number, maxPx: number): string[] {
   }
   if (current) lines.push(current)
   return lines
-}
-
-function resolveFontPath(fontName: string): string {
-  // Extraer nombre base si viene en formato CSS: "'Inter', sans-serif" → "Inter"
-  const cleanName = fontName.replace(/'/g, '').split(',')[0].trim()
-  const customFont = path.join(config.paths.fonts, `${cleanName}.ttf`)
-  const resolved = fs.existsSync(customFont)
-    ? customFont
-    : (FONT_FALLBACKS[cleanName] || FONT_FALLBACKS[fontName] || `${WINDOWS_FONTS}/arial.ttf`)
-  return resolved.replace(/\\/g, '/').replace(/^([A-Z]):/, '$1\\:')
-}
-
-// Escapa el texto de una sola linea para el filtro drawtext
-function escapeLine(text: string): string {
-  // En un archivo de script de filtros, el escapado es más sencillo
-  return text.replace(/'/g, "''").replace(/:/g, '\\:')
 }
 
 export async function generateVideo(

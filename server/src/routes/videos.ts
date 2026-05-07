@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
 import fs from 'fs'
-import { exec } from 'child_process'
+import { execFile } from 'child_process'
 import axios from 'axios'
 import { generateVideo } from '../services/videoGenerator'
 import { uploadVideoToS3 } from '../services/s3Service'
@@ -196,9 +196,9 @@ router.post('/:id/publish', async (req, res) => {
 // POST /api/videos/open-output — abre la carpeta de output en el explorador de archivos
 router.post('/open-output', (req, res) => {
   const { folder = 'output' } = req.body ?? {}
-  const folderPath = folder === 'images' ? config.paths.outputImages : config.paths.output
-  exec(`explorer "${folderPath}"`, (err) => {
-    if (err) return res.status(500).json({ error: err.message })
+  const folderPath = path.resolve(folder === 'images' ? config.paths.outputImages : config.paths.output)
+  execFile('explorer', [folderPath], (err) => {
+    // explorer siempre devuelve exit code 1 en Windows, ignorar
   })
   res.json({ success: true, path: folderPath })
 })

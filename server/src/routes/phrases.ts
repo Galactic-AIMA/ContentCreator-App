@@ -9,6 +9,24 @@ import { generateAIPhrases } from '../services/phraseAIGenerator'
 
 const router = Router()
 
+const SUPPORTED_IMG = ['.jpg', '.jpeg', '.jfif', '.png', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.avif']
+
+/** Lista recursivamente todas las imágenes soportadas (retorna paths relativos). */
+function listImagesRecursive(baseDir: string, subDir = ''): string[] {
+  const currentDir = subDir ? path.join(baseDir, subDir) : baseDir
+  if (!fs.existsSync(currentDir)) return []
+  const results: string[] = []
+  for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+    const relativePath = subDir ? `${subDir}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      results.push(...listImagesRecursive(baseDir, relativePath))
+    } else if (SUPPORTED_IMG.includes(path.extname(entry.name).toLowerCase())) {
+      results.push(relativePath)
+    }
+  }
+  return results
+}
+
 function loadPhrases(): Phrase[] {
   if (!fs.existsSync(config.paths.phrases)) return []
   return JSON.parse(fs.readFileSync(config.paths.phrases, 'utf-8'))
@@ -38,7 +56,6 @@ router.get('/suggest', (req, res) => {
   const { imageId } = req.query as { imageId?: string }
 
   const DB_PATH = path.join(__dirname, '../../../data/videos.json')
-  const SUPPORTED = ['.jpg', '.jpeg', '.jfif', '.png', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.avif']
   const CATEGORIES = ['Sincronía Natural', 'Sabiduría del Cuerpo', 'Ritmo Vital'] as const
   type Category = typeof CATEGORIES[number]
 
@@ -54,11 +71,9 @@ router.get('/suggest', (req, res) => {
     }
   }
 
-  // 2. Imágenes disponibles en el banco local
+  // 2. Imágenes disponibles en el banco local (incluye subcarpetas)
   const imagesDir = config.paths.images
-  const allImages: string[] = fs.existsSync(imagesDir)
-    ? fs.readdirSync(imagesDir).filter((f) => SUPPORTED.includes(path.extname(f).toLowerCase()))
-    : []
+  const allImages: string[] = listImagesRecursive(imagesDir)
 
   // 3. Frases activas (tratar undefined status como 'active' para compatibilidad)
   const phrases = loadPhrases()
@@ -287,7 +302,6 @@ router.get('/suggest-batch', (req, res) => {
   const count = Math.min(Math.max(parseInt(req.query.count as string) || 5, 1), 20)
 
   const DB_PATH = path.join(__dirname, '../../../data/videos.json')
-  const SUPPORTED = ['.jpg', '.jpeg', '.jfif', '.png', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.avif']
   const CATEGORIES = ['Sincronía Natural', 'Sabiduría del Cuerpo', 'Ritmo Vital'] as const
   type Category = typeof CATEGORIES[number]
 
@@ -300,10 +314,9 @@ router.get('/suggest-batch', (req, res) => {
     if (v.phraseId && v.config?.imageId) usedPairs.add(`${v.phraseId}:${v.config.imageId}`)
   }
 
+  // Imágenes disponibles (incluye subcarpetas como pinterest/)
   const imagesDir = config.paths.images
-  const allImages: string[] = fs.existsSync(imagesDir)
-    ? fs.readdirSync(imagesDir).filter((f) => SUPPORTED.includes(path.extname(f).toLowerCase()))
-    : []
+  const allImages: string[] = listImagesRecursive(imagesDir)
 
   const phrases = loadPhrases()
   const activePhrases = phrases.filter((p) => (p.status ?? 'active') === 'active')

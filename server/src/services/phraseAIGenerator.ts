@@ -1,8 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { v4 as uuidv4 } from 'uuid'
 import { Phrase } from '../types'
+import { config } from '../config'
+import { withRetry } from '../utils/retry'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const genAI = new GoogleGenerativeAI(config.gemini.apiKey)
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
 type Category = 'Sincronía Natural' | 'Sabiduría del Cuerpo' | 'Ritmo Vital'
@@ -19,21 +21,12 @@ export async function generateAIPhrases(category: Category, count: number): Prom
 Responde ÚNICAMENTE con un array JSON (sin markdown, sin explicaciones):
 ["gancho 1 // remate 1", "gancho 2 // remate 2", ...]`
 
-  let result
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      result = await model.generateContent(prompt)
-      break
-    } catch (err: any) {
-      if (attempt < 2 && err.message?.includes('429')) {
-        await new Promise((r) => setTimeout(r, 5000))
-      } else {
-        throw err
-      }
-    }
-  }
+  const result = await withRetry(() => model.generateContent(prompt), {
+    maxAttempts: 3,
+    initialDelayMs: 2000,
+  })
 
-  const raw = result!.response.text().trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
+  const raw = result.response.text().trim().replace(/^```(?:json)?\s*|\s*```$/g, '').trim()
 
   let texts: string[]
   try {

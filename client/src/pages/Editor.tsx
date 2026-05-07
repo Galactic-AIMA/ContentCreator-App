@@ -120,6 +120,14 @@ export default function Editor() {
       setConfig({ imageId, imagePath, imagePreviewUrl: imageUrl })
       setSuggestChip({ category, pairsRemaining })
       setPairStatus('free')
+
+      // Auto-generar metadatos (título, descripción, tags) en background
+      phrasesApi.generateMeta(phrase.text).then((meta) => {
+        setMeta({ title: meta.title, description: meta.description, tags: meta.tags })
+        toast.success('Metadatos generados automáticamente')
+      }).catch(() => {
+        // Silencioso — el usuario puede llenar manualmente
+      })
     } catch {
       toast.error('Error obteniendo sugerencia')
     } finally {

@@ -27,6 +27,10 @@ export const config = {
     accessKey: process.env.UNSPLASH_ACCESS_KEY || '',
   },
 
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || '',
+  },
+
   galleryDl: {
     // Ruta al ejecutable — vacío = busca en PATH global
     bin: process.env.GALLERY_DL_PATH || 'gallery-dl',

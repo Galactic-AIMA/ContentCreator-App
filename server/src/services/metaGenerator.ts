@@ -1,6 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { config } from '../config'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+import { withRetry } from '../utils/retry'
+
+const genAI = new GoogleGenerativeAI(config.gemini.apiKey)
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
 export interface VideoMeta {
@@ -52,20 +55,12 @@ Reglas de redacción:
 
 Responde ÚNICAMENTE con el JSON, sin explicaciones ni markdown.`
 
-  let result
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      result = await model.generateContent(prompt)
-      break
-    } catch (err: any) {
-      if (attempt < 2 && err.message?.includes('429')) {
-        await new Promise((r) => setTimeout(r, 5000))
-      } else {
-        throw err
-      }
-    }
-  }
-  const text = result!.response.text().trim().replace(/^```json\s*|```$/g, '')
+  const result = await withRetry(() => model.generateContent(prompt), {
+    maxAttempts: 3,
+    initialDelayMs: 2000,
+  })
+
+  const text = result.response.text().trim().replace(/^```json\s*|```$/g, '')
 
   try {
     const parsed = JSON.parse(text) as VideoMeta

@@ -44,6 +44,8 @@ export const videoConfigSchema = z.object({
   style: z.enum(['serene', 'raw', 'minimal', 'cinematic', 'bold']),
   textEffect: z.enum(['fadeIn', 'typewriter', 'slideUp', 'scaleIn', 'glowPulse', 'none']),
   watermark: z.boolean().optional(),
+  watermarkPosition: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right']).optional(),
+  cinematicGrain: z.boolean().optional(),
 });
 
 export const generateVideoRequestSchema = z.object({

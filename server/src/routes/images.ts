@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import fs from 'fs'
 import path from 'path'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 import axios from 'axios'
 import { config } from '../config'
 import { ImageItem } from '../types'
@@ -24,23 +24,41 @@ const MIME_OVERRIDES: Record<string, string> = {
   '.avif': 'image/avif',
 }
 
-// GET /api/images — listar imágenes del banco local
+/**
+ * Lista recursivamente todas las imágenes soportadas dentro de un directorio.
+ * Retorna paths relativos al directorio base (e.g. 'pinterest/foto.jpg').
+ */
+function listImagesRecursive(baseDir: string, subDir = ''): string[] {
+  const currentDir = subDir ? path.join(baseDir, subDir) : baseDir
+  if (!fs.existsSync(currentDir)) return []
+
+  const results: string[] = []
+  for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+    const relativePath = subDir ? `${subDir}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      results.push(...listImagesRecursive(baseDir, relativePath))
+    } else if (SUPPORTED.includes(path.extname(entry.name).toLowerCase())) {
+      results.push(relativePath)
+    }
+  }
+  return results
+}
+
+// GET /api/images — listar imágenes del banco local (incluye subcarpetas)
 router.get('/', (_req, res) => {
   try {
     const dir = config.paths.images
     if (!fs.existsSync(dir)) return res.json([])
 
-    const files = fs.readdirSync(dir).filter((f) =>
-      SUPPORTED.includes(path.extname(f).toLowerCase())
-    )
+    const files = listImagesRecursive(dir)
 
     const usage = loadUsage()
-    const images: ImageItem[] = files.map((filename) => ({
-      id: filename,
-      filename,
-      path: path.join(dir, filename),
-      url: `/api/images/file/${encodeURIComponent(filename)}`,
-      usageCount: usage[filename] ?? 0,
+    const images: ImageItem[] = files.map((relativePath) => ({
+      id: relativePath,
+      filename: relativePath,
+      path: path.join(dir, relativePath),
+      url: `/api/images/file/${encodeURIComponent(relativePath)}`,
+      usageCount: usage[relativePath] ?? 0,
     }))
 
     res.json(images)
@@ -169,19 +187,30 @@ router.post('/gallery-dl', (req, res) => {
   const { url } = req.body ?? {}
   if (!url) return res.status(400).json({ error: 'url requerida' })
 
-  const destDir = config.paths.images
+  // Validar que sea una URL HTTP(S) legítima
+  try {
+    const parsed = new URL(String(url))
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return res.status(400).json({ error: 'Solo URLs HTTP/HTTPS son aceptadas' })
+    }
+  } catch {
+    return res.status(400).json({ error: 'URL inválida' })
+  }
+
+  // Descargar a subcarpeta pinterest/ dentro del banco de imágenes
+  const destDir = path.join(config.paths.images, 'pinterest')
   if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
 
-  const bin = `"${config.galleryDl.bin}"`
-  // -D pone los archivos directamente en destDir sin crear subcarpetas
-  const cmd = `${bin} -D "${destDir}" --filename "{filename}.{extension}" "${url}"`
+  const bin = config.galleryDl.bin
+  // execFile no usa shell, por lo que los argumentos son seguros contra inyección
+  const args = ['-D', destDir, '--filename', '{filename}.{extension}', String(url)]
 
-  exec(cmd, { timeout: 5 * 60 * 1000 }, (err, stdout, stderr) => {
+  execFile(bin, args, { timeout: 5 * 60 * 1000 }, (err, stdout, stderr) => {
     if (err && !stdout) {
       const msg = stderr?.trim() || err.message
       if (msg.includes('command not found') || msg.includes('is not recognized') || msg.includes('no se reconoce')) {
         return res.status(503).json({
-          error: `gallery-dl no encontrado en: ${config.galleryDl.bin}. Verifica GALLERY_DL_PATH en .env`,
+          error: `gallery-dl no encontrado en: ${bin}. Verifica GALLERY_DL_PATH en .env`,
         })
       }
       return res.status(500).json({ error: msg })
@@ -198,7 +227,14 @@ router.post('/gallery-dl', (req, res) => {
 // GET /api/images/file/:filename — servir imagen con content-type correcto
 router.get('/file/:filename', (req, res) => {
   const filename = decodeURIComponent(req.params.filename)
-  const filepath = path.join(config.paths.images, filename)
+  const filepath = path.resolve(config.paths.images, filename)
+
+  // Prevenir path traversal: el archivo debe estar dentro del directorio de imágenes
+  const safeBase = path.resolve(config.paths.images)
+  if (!filepath.startsWith(safeBase + path.sep) && filepath !== safeBase) {
+    return res.status(403).json({ error: 'Acceso denegado' })
+  }
+
   if (!fs.existsSync(filepath)) return res.status(404).end()
 
   const ext = path.extname(filename).toLowerCase()

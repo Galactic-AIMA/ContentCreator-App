@@ -227,7 +227,9 @@ function drawText(ctx: CanvasRenderingContext2D, config: VideoConfig, W: number,
   ctx.textAlign = text.align
   ctx.textBaseline = 'middle'
 
-  const maxPx = (text.maxWidth / 100) * W
+  // Usar la misma lógica de wrapping que computeLayoutsFor (Editor.tsx)
+  // para que el preview sea WYSIWYG con el renderizado FFmpeg
+  const maxPx = (Math.min(text.maxWidth, 85) / 100) * W
   const x =
     text.align === 'center'
       ? W / 2
@@ -249,13 +251,17 @@ function drawText(ctx: CanvasRenderingContext2D, config: VideoConfig, W: number,
   const segments = parseTextSegments(displayContent)
   const flatText = segments.map(s => s.text).join('')
 
-  // Wrap text
+  // Factor 1.15x: compensa la diferencia de métricas entre Canvas y FFmpeg drawtext.
+  // Sin esto, el preview muestra menos líneas que el render final y el texto se corta.
+  const measureSafe = (txt: string) => ctx.measureText(txt).width * 1.15
+
+  // Wrap text (sincronizado con computeLayoutsFor)
   const words = flatText.split(' ')
   const lines: string[] = []
   let current = ''
   for (const word of words) {
     const test = current ? `${current} ${word}` : word
-    if (ctx.measureText(test).width > maxPx && current) {
+    if (measureSafe(test) > maxPx && current) {
       lines.push(current)
       current = word
     } else {
